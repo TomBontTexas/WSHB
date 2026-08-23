@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WSHB - Warp Space Hero Builder</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#129470;</text></svg>">
+<link rel="stylesheet" href="styles.css?v=1">
+</head>
+<body>
+<div id="app">
+
+  <header class="toolbar">
+    <div class="toolbar-title">
+      <span class="logo-wrap">
+        <span class="logo-ring" aria-hidden="true"></span>
+        <svg class="logo-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path d="M12 2 C9 2 7 4.5 7 8 C7 11 8.5 13 9.5 14 L9 21 L11 22 L11 15.5 L13 15.5 L13 22 L15 21 L14.5 14 C15.5 13 17 11 17 8 C17 4.5 15 2 12 2 Z"/>
+          <circle cx="9.7" cy="8" r="1" fill="currentColor" stroke="none"/>
+          <circle cx="14.3" cy="8" r="1" fill="currentColor" stroke="none"/>
+        </svg>
+      </span>
+      Warp Space Hero Builder
+    </div>
+    <div class="toolbar-actions">
+      <button id="btnNew" title="New Hero">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18"/><line x1="12" y1="9" x2="12" y2="15"/><line x1="9" y1="12" x2="15" y2="12"/></svg>
+        New
+      </button>
+      <button id="btnWizard" title="Auto-create a Hero">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 L15 9 L22 12 L15 15 L12 22 L9 15 L2 12 L9 9 Z"/><circle cx="19" cy="5" r="1.4" fill="currentColor" stroke="none"/></svg>
+        Wizard
+      </button>
+      <button id="btnOpen" title="Open .json hero files">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7 L9 7 L11 9 L21 9 L21 19 L3 19 Z"/></svg>
+        Open
+      </button>
+      <input type="file" id="fileOpenInput" multiple hidden accept=".json">
+      <button id="btnOpenFolder" title="Import every .json hero file in a folder (and its subfolders) at once">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8 L8 8 L10 10 L21 10 L19 19 L5 19 Z"/><path d="M3 8 L3 5 L9 5 L11 7"/></svg>
+        Open Folder
+      </button>
+      <input type="file" id="folderOpenInput" webkitdirectory directory multiple hidden>
+      <button id="btnClone" title="Clone selected hero">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="13" height="13"/><rect x="8" y="8" width="13" height="13"/></svg>
+        Clone
+      </button>
+      <button id="btnSaveAs" title="Download selected hero as .json">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="3" x2="12" y2="14"/><polyline points="6,9 12,15 18,9"/><line x1="4" y1="20" x2="20" y2="20"/></svg>
+        Save As
+      </button>
+      <button id="btnSaveAll" title="Download all heroes as .json files">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8" width="13" height="13"/><rect x="8" y="3" width="13" height="13"/></svg>
+        Save All
+      </button>
+      <button id="btnClose" title="Close selected hero (keeps it in autosave until removed)">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 L5 4 L5 20 L9 20"/><line x1="21" y1="12" x2="9" y2="12"/><polyline points="15,7 21,12 15,17"/></svg>
+        Close
+      </button>
+      <span class="toolbar-spacer"></span>
+      <span id="autosaveStatus" class="autosave-status">All changes saved locally</span>
+    </div>
+  </header>
+
+  <div class="main-layout">
+
+    <aside class="sidebar">
+      <h2>Heroes</h2>
+      <ul id="heroList" class="vehicle-list"></ul>
+    </aside>
+
+    <section class="editor" id="editorSection">
+      <div id="emptyState" class="empty-state">
+        <div class="hologram" aria-hidden="true">
+          <div class="holo-ring holo-ring-1"></div>
+          <div class="holo-ring holo-ring-2"></div>
+          <div class="holo-ring holo-ring-3"></div>
+          <div class="holo-core"></div>
+        </div>
+        <p>No Hero selected.</p>
+        <p class="empty-state-hint">Use <strong>New</strong> in the toolbar above to create one.</p>
+      </div>
+
+      <div id="editorBody" class="editor-body" hidden>
+        <nav class="tabs">
+          <button class="tab-btn active" data-tab="info">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="7.5" r="0.8" fill="currentColor" stroke="none"/></svg>
+            Info
+          </button>
+          <button class="tab-btn" data-tab="archetype">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3 L11 3 L21 13 L13 21 L3 11 Z"/><circle cx="7.5" cy="7.5" r="1.4" fill="currentColor" stroke="none"/></svg>
+            Archetype &amp; Abilities
+          </button>
+          <button class="tab-btn" data-tab="skills">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="7" cy="18" r="2" fill="currentColor" stroke="none"/></svg>
+            Skills
+          </button>
+          <button class="tab-btn" data-tab="equipment">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="1"/><path d="M8 8 V6 a4 4 0 0 1 8 0 V8"/></svg>
+            Equipment
+          </button>
+          <button class="tab-btn" data-tab="background">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>
+            Background
+          </button>
+          <button class="tab-btn" data-tab="charsheet">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="1.5"/><line x1="7.5" y1="7" x2="16.5" y2="7"/><line x1="7.5" y1="11" x2="16.5" y2="11"/><line x1="7.5" y1="15" x2="13" y2="15"/></svg>
+            Character Sheet
+          </button>
+        </nav>
+
+        <!-- ============================= INFO TAB ============================= -->
+        <div class="tab-panel active" id="tab-info">
+          <div class="field-grid">
+            <label>Hero Name
+              <input type="text" id="fHeroName">
+            </label>
+            <label>Culture
+              <input type="text" id="fCulture" placeholder="e.g. House Lorraine, Freeborn, etc.">
+            </label>
+            <label>Languages
+              <input type="text" id="fLanguages" placeholder="Native language + 1 free (Esperanto, House tongue, etc.)">
+            </label>
+            <label>Archetype
+              <select id="fArchetype"></select>
+            </label>
+            <label>Profession
+              <select id="fProfession"></select>
+            </label>
+            <label>Starting Development Points
+              <input type="number" id="fStartingDevPoints" min="0" step="1">
+            </label>
+            <label>Wealth (₿ Monero)
+              <input type="number" id="fWealth" min="0" step="1">
+            </label>
+          </div>
+          <fieldset>
+            <legend>Archetype Description</legend>
+            <div class="info-box" id="archetypeDescription"></div>
+          </fieldset>
+        </div>
+
+        <!-- ============================= ARCHETYPE & ABILITIES TAB ============================= -->
+        <div class="tab-panel" id="tab-archetype">
+          <div class="picker-columns">
+            <div class="picker-col">
+              <h3>Repository</h3>
+              <div class="listbox ability-repo-wrap" id="abilitiesRepositoryWrap">
+                <table class="feature-table ability-repo-table" id="abilitiesRepositoryTable"></table>
+              </div>
+              <div class="picker-controls">
+                <label>Level <input type="number" id="fAbilityLevel" min="1" value="1" step="1"></label>
+                <button id="btnAddAbility">Add &rarr;</button>
+              </div>
+            </div>
+            <div class="picker-col">
+              <h3>Selected</h3>
+              <div class="listbox ability-repo-wrap" id="abilitiesSelectedWrap">
+                <table class="feature-table ability-repo-table" id="abilitiesSelectedTable"></table>
+              </div>
+              <div class="picker-controls">
+                <button id="btnRemoveAbility">&larr; Remove</button>
+              </div>
+            </div>
+          </div>
+          <div class="info-box" id="abilityInformation"></div>
+        </div>
+
+        <!-- ============================= SKILLS TAB ============================= -->
+        <div class="tab-panel" id="tab-skills">
+          <div class="readout-row">
+            <span id="lAttributePoints">Attribute Points: 0 / 15 spent</span>
+          </div>
+          <table class="feature-table" id="skillsTable"></table>
+        </div>
+
+        <!-- ============================= EQUIPMENT TAB ============================= -->
+        <div class="tab-panel" id="tab-equipment">
+          <div class="readout-row">
+            <span id="lWealthUsed">Wealth: 0 / 0</span>
+            <span id="lLoadUsed">Load: 0 / 0 lbs</span>
+          </div>
+
+          <nav class="subtabs">
+            <button class="subtab-btn active" data-subtab="weapons">Weapons</button>
+            <button class="subtab-btn" data-subtab="armor">Armor &amp; Shields</button>
+            <button class="subtab-btn" data-subtab="gear">Gear</button>
+          </nav>
+
+          <div class="subtab-panel active" id="subtab-weapons">
+            <h3>Repository</h3>
+            <div class="listbox equipment-wide-wrap" id="weaponsRepositoryWrap">
+              <table class="feature-table equipment-repo-table" id="weaponsRepositoryTable"></table>
+            </div>
+            <div class="picker-controls">
+              <label>Qty <input type="number" id="fWeaponQty" min="1" value="1" step="1"></label>
+              <label class="checkbox-label"><input type="checkbox" id="fWeaponWorn"> Worn (half weight)</label>
+              <button id="btnAddWeapon">Add &darr;</button>
+            </div>
+            <h3>Selected</h3>
+            <div class="listbox equipment-wide-wrap" id="weaponsSelectedWrap">
+              <table class="feature-table equipment-selected-table" id="weaponsSelectedTable"></table>
+            </div>
+            <div class="picker-controls">
+              <button id="btnRemoveWeapon">Remove</button>
+            </div>
+            <div class="info-box" id="weaponInformation"></div>
+          </div>
+
+          <div class="subtab-panel" id="subtab-armor">
+            <h3>Repository</h3>
+            <div class="listbox equipment-wide-wrap" id="armorRepositoryWrap">
+              <table class="feature-table equipment-repo-table" id="armorRepositoryTable"></table>
+            </div>
+            <div class="picker-controls">
+              <label>Qty <input type="number" id="fArmorQty" min="1" value="1" step="1"></label>
+              <label class="checkbox-label"><input type="checkbox" id="fArmorWorn"> Worn (half weight)</label>
+              <button id="btnAddArmor">Add &darr;</button>
+            </div>
+            <h3>Selected</h3>
+            <div class="listbox equipment-wide-wrap" id="armorSelectedWrap">
+              <table class="feature-table equipment-selected-table" id="armorSelectedTable"></table>
+            </div>
+            <div class="picker-controls">
+              <button id="btnRemoveArmor">Remove</button>
+            </div>
+            <div class="info-box" id="armorInformation"></div>
+          </div>
+
+          <div class="subtab-panel" id="subtab-gear">
+            <h3>Repository</h3>
+            <div class="listbox equipment-wide-wrap" id="gearRepositoryWrap">
+              <table class="feature-table equipment-repo-table" id="gearRepositoryTable"></table>
+            </div>
+            <div class="picker-controls">
+              <label>Qty <input type="number" id="fGearQty" min="1" value="1" step="1"></label>
+              <label class="checkbox-label"><input type="checkbox" id="fGearWorn"> Worn (half weight)</label>
+              <button id="btnAddGear">Add &darr;</button>
+            </div>
+            <h3>Selected</h3>
+            <div class="listbox equipment-wide-wrap" id="gearSelectedWrap">
+              <table class="feature-table equipment-selected-table" id="gearSelectedTable"></table>
+            </div>
+            <div class="picker-controls">
+              <button id="btnRemoveGear">Remove</button>
+            </div>
+            <div class="info-box" id="gearInformation"></div>
+          </div>
+        </div>
+
+        <!-- ============================= BACKGROUND TAB ============================= -->
+        <div class="tab-panel" id="tab-background">
+          <fieldset>
+            <legend>Disability (+5 Development Points)</legend>
+            <label class="checkbox-label">
+              <input type="checkbox" id="fHasDisability"> Hero has a Disability
+            </label>
+            <textarea id="fDisabilityText" rows="3" placeholder="e.g. Code of Honor, Alcoholic, Curious..."></textarea>
+          </fieldset>
+          <fieldset>
+            <legend>Backstory (+5 Development Points)</legend>
+            <label class="checkbox-label">
+              <input type="checkbox" id="fHasBackstory"> Hero has a written Backstory
+            </label>
+            <textarea id="fBackstoryText" rows="6" placeholder="One-page background and motivation..."></textarea>
+          </fieldset>
+          <fieldset>
+            <legend>Notes</legend>
+            <textarea id="fDescription" rows="8" placeholder="Freeform notes, appearance, equipment..."></textarea>
+          </fieldset>
+        </div>
+
+        <!-- ============================= CHARACTER SHEET TAB ============================= -->
+        <!-- Mirrors the "Hero Display" quick-reference sheet from Warp Space: Heroes & Combat 2e. -->
+        <div class="tab-panel" id="tab-charsheet">
+          <div class="readout-row sheet-print-row">
+            <button id="btnPrintSheet" class="no-print">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="7"/><path d="M6 17 H4 a1 1 0 0 1 -1 -1 V9 a1 1 0 0 1 1 -1 H20 a1 1 0 0 1 1 1 V16 a1 1 0 0 1 -1 1 H18"/><rect x="6" y="14" width="12" height="8"/></svg>
+              Print Character Sheet
+            </button>
+          </div>
+          <div class="field-grid">
+            <label>Hero Name
+              <input type="text" id="sheetHeroName" readonly>
+            </label>
+            <label>Archetype
+              <input type="text" id="sheetArchetype" readonly>
+            </label>
+            <label>Player
+              <input type="text" id="fPlayerName">
+            </label>
+            <label>Campaign / Gamemaster
+              <input type="text" id="fCampaign">
+            </label>
+          </div>
+
+          <div class="field-grid">
+            <label><span>Health (<span id="sheetHealthMax">0</span> max)</span>
+              <input type="number" id="fCurrentHealth" min="0" step="1">
+            </label>
+            <label><span>Resolve (<span id="sheetResolveMax">0</span> max)</span>
+              <input type="number" id="fCurrentResolve" min="0" step="1">
+            </label>
+            <label>Max Load
+              <input type="text" id="sheetMaxLoad" readonly>
+            </label>
+            <label>DR (worn armor)
+              <input type="text" id="sheetDR" readonly>
+            </label>
+            <label>SR (Stress Reduction)
+              <input type="number" id="fStressReduction" min="0" step="1">
+            </label>
+            <label>Move
+              <input type="text" id="sheetMove" readonly>
+            </label>
+          </div>
+
+          <div class="picker-columns">
+            <div class="picker-col">
+              <h3>Options / Background</h3>
+              <table class="feature-table" id="sheetOptionsTable"></table>
+            </div>
+            <div class="picker-col">
+              <h3>Weapons Carried</h3>
+              <div class="listbox equipment-wide-wrap sheet-carried-wrap">
+                <table class="feature-table equipment-selected-table" id="sheetWeaponsTable"></table>
+              </div>
+              <h3>Armor &amp; Shields Carried</h3>
+              <div class="listbox equipment-wide-wrap sheet-carried-wrap">
+                <table class="feature-table equipment-selected-table" id="sheetArmorTable"></table>
+              </div>
+            </div>
+          </div>
+
+          <div class="picker-columns">
+            <div class="picker-col">
+              <table class="feature-table" id="sheetAttrSkillLeftTable"></table>
+            </div>
+            <div class="picker-col">
+              <table class="feature-table" id="sheetAttrSkillRightTable"></table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="summary-panel" id="summaryPanel" hidden>
+      <h2>Development Points</h2>
+
+      <table class="summary-table">
+        <thead>
+          <tr><th></th><th>Points</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Total Dev Points</td><td id="sTotalDevPoints">0</td></tr>
+          <tr><td>Unspent Dev Points</td><td id="sUnspentDevPoints">0</td></tr>
+          <tr><td>Skills</td><td id="sSkillsDP">0</td></tr>
+          <tr><td>Archetype Abilities</td><td id="sAbilitiesDP">0</td></tr>
+          <tr><td>Generic Abilities</td><td id="sGenericDP">0</td></tr>
+          <tr><td>Attribute Points Left</td><td id="sAttributePointsRemaining">15</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Hero Sheet</h2>
+      <div id="statisticsBlock" class="statistics-block"></div>
+
+      <h2 class="gascar-heading">GASCAR</h2>
+      <div id="gascarBlock" class="statistics-block"></div>
+    </aside>
+
+  </div>
+</div>
+
+<!-- ============================= HERO CREATION WIZARD ============================= -->
+<div class="modal-overlay" id="wizardOverlay" hidden>
+  <div class="modal-panel">
+    <h2>Hero Creation Wizard</h2>
+    <p class="modal-subtitle">Auto-generates a complete Hero - Attributes, Skills, Archetype &amp; Generic Abilities, and a starting Equipment loadout - from a Total Points budget, an Archetype, and a Profession.</p>
+
+    <div class="field-grid">
+      <label>Total Development Points
+        <input type="number" id="wizTotalPoints" min="1" step="5" value="50">
+      </label>
+      <label>Archetype
+        <select id="wizArchetype"></select>
+      </label>
+      <label>Profession
+        <select id="wizProfession"></select>
+      </label>
+    </div>
+
+    <fieldset class="wizard-level-fieldset">
+      <legend>Creation Level</legend>
+      <label class="radio-option">
+        <input type="radio" name="wizLevel" value="Dedicated">
+        <span><strong>Dedicated</strong> - concentrates in just a few absolutely required Attributes and Skills.</span>
+      </label>
+      <label class="radio-option">
+        <input type="radio" name="wizLevel" value="Specialized">
+        <span><strong>Specialized</strong> - spreads out some into a secondary specialty as well.</span>
+      </label>
+      <label class="radio-option">
+        <input type="radio" name="wizLevel" value="Practical" checked>
+        <span><strong>Practical</strong> - a well-rounded build meant to be played long-term.</span>
+      </label>
+    </fieldset>
+
+    <div class="modal-actions">
+      <button id="btnWizardCancel">Cancel</button>
+      <button id="btnWizardGenerate" class="primary">Generate Hero</button>
+    </div>
+  </div>
+</div>
+
+<script src="data.js?v=1"></script>
+<script src="equipment-data.js?v=1"></script>
+<script src="model.js?v=1"></script>
+<script src="app.js?v=1"></script>
+<script src="wizard.js?v=1"></script>
+</body>
+</html>
